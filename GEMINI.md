@@ -12,7 +12,7 @@ This directory contains a Neovim configuration based on the [kickstart.nvim](htt
 
 **Core Plugins:**
 
-*   **`telescope.nvim`**: A fuzzy finder for files, LSP, and more.
+
 *   **`nvim-lspconfig`**: Configures the Language Server Protocol (LSP) for features like go-to-definition, find references, and autocompletion.
 *   **`mason.nvim`**: Manages the installation of LSPs.
 *   **`conform.nvim`**: Provides auto-formatting capabilities.
@@ -35,8 +35,7 @@ On the first launch, `lazy.nvim` will automatically install the configured plugi
 
 *   `:Lazy`: View the status of your plugins.
 *   `:Lazy update`: Update your plugins.
-*   `:Telescope find_files`: Fuzzy find files in the current directory.
-*   `:Telescope live_grep`: Search for a string in the current directory.
+
 
 ## Development Conventions
 
