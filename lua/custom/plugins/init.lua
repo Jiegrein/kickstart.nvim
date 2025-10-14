@@ -27,8 +27,9 @@ return {
 		local formatting = null_ls.builtins.formatting -- to setup formatters
 		local diagnostics = null_ls.builtins.diagnostics -- to setup linters
 		local sources = {
+			require('none-ls.diagnostics.ruff'),
 			require('none-ls.formatting.ruff').with { extra_args = { '--extend-select', 'I' } },
-			require 'none-ls.formatting.ruff_format',
+			require('none-ls.formatting.ruff_format'),
 			diagnostics.checkmake,
 			formatting.prettier.with { filetypes = { 'html', 'json', 'yaml', 'markdown' } },
 			formatting.stylua,
