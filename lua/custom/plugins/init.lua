@@ -17,6 +17,8 @@ return {
 				'prettier', -- ts/js formatter
 				'eslint_d', -- ts/js linter
 				'shfmt',
+				'csharpier', -- C# formatter
+				'xmlformatter', -- XML and .csproj formatter
 				-- 'stylua', -- lua formatter; Already installed via Mason
 				-- 'ruff', -- Python linter and formatter; Already installed via Mason
 			},
@@ -35,6 +37,8 @@ return {
 			formatting.stylua,
 			formatting.shfmt.with { args = { '-i', '4' } },
 			formatting.terraform_fmt,
+			formatting.csharpier, -- C# auto-formatting
+			formatting.xmlformat, -- XML and .csproj auto-formatting
 		}
 		local augroup = vim.api.nvim_create_augroup('LspFormatting', {})
 		null_ls.setup {
