@@ -344,8 +344,11 @@ require('lazy').setup({
 
       -- Document existing key chains
       spec = {
+        { '<leader>c', group = '[C]ode' },
+        { '<leader>d', group = '[D]ebug' },
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
+        { '<leader>x', group = 'Diagnostics/Trouble' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
@@ -725,10 +728,8 @@ require('lazy').setup({
             },
           },
         },
-        -- C# related LSPs
-        jsonls = {}, -- JSON LSP for appsettings.json, package.json, etc.
-        html = {}, -- HTML LSP for Razor/Blazor files
-        cssls = {}, -- CSS LSP for styling in Blazor
+        -- NOTE: jsonls, html, and cssls are installed globally via npm
+        -- (vscode-langservers-extracted package) and work automatically
       }
 
       -- Ensure the servers and tools above are installed
