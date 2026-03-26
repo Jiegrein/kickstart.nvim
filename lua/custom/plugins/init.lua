@@ -1,58 +1,54 @@
--- You can add your own plugins here or in other files in this directory!
---  I promise not to create any merge conflicts in this directory :)
---
--- See the kickstart.nvim README for more information
-
 return {
-	'nvimtools/none-ls.nvim',
-	dependencies = {
-		'nvimtools/none-ls-extras.nvim',
-		'jayp0521/mason-null-ls.nvim', -- ensure dependencies are installed
-	},
-	config = function()
-		-- list of formatters & linters for mason to install
-		require('mason-null-ls').setup {
-			ensure_installed = {
-				--'checkmake',
-				'prettier', -- ts/js formatter
-				'eslint_d', -- ts/js linter
-				'shfmt',
-				-- 'stylua', -- lua formatter; Already installed via Mason
-				-- 'ruff', -- Python linter and formatter; Already installed via Mason
+	{
+		'stevearc/conform.nvim',
+		event = { 'BufWritePre' },
+		cmd = { 'ConformInfo' },
+		opts = {
+			formatters_by_ft = {
+				lua = { 'stylua' },
+				python = { 'ruff_organize_imports', 'ruff_format' },
+				html = { 'prettier' },
+				json = { 'prettier' },
+				yaml = { 'prettier' },
+				markdown = { 'prettier' },
+				sh = { 'shfmt' },
+				terraform = { 'terraform_fmt' },
 			},
-			-- auto-install configured formatters & linters (with null-ls)
-			automatic_installation = true,
-		}
-		local null_ls = require 'null-ls'
-		local formatting = null_ls.builtins.formatting -- to setup formatters
-		local diagnostics = null_ls.builtins.diagnostics -- to setup linters
-		local sources = {
-			require('none-ls.diagnostics.ruff'),
-			require('none-ls.formatting.ruff').with { extra_args = { '--extend-select', 'I' } },
-			require('none-ls.formatting.ruff_format'),
-			diagnostics.checkmake,
-			formatting.prettier.with { filetypes = { 'html', 'json', 'yaml', 'markdown' } },
-			formatting.stylua,
-			formatting.shfmt.with { args = { '-i', '4' } },
-			formatting.terraform_fmt,
-		}
-		local augroup = vim.api.nvim_create_augroup('LspFormatting', {})
-		null_ls.setup {
-			-- debug = true, -- Enable debug mode. Inspect logs with :NullLsLog.
-			sources = sources,
-			-- you can reuse a shared lspconfig on_attach callback here
-			on_attach = function(client, bufnr)
-				if client.supports_method 'textDocument/formatting' then
-					vim.api.nvim_clear_autocmds { group = augroup, buffer = bufnr }
-					vim.api.nvim_create_autocmd('BufWritePre', {
-						group = augroup,
-						buffer = bufnr,
-						callback = function()
-							vim.lsp.buf.format { async = false }
-						end,
-					})
-				end
-			end,
-		}
-	end,
+			format_on_save = {
+				timeout_ms = 500,
+				lsp_format = 'fallback',
+			},
+			formatters = {
+				stylua = {
+					prepend_args = { '--no-editorconfig' },
+				},
+				shfmt = {
+					prepend_args = { '-i', '4' },
+				},
+				ruff_organize_imports = {
+					command = 'ruff',
+					args = { 'check', '--fix', '--select', 'I', '--stdin-filename', '$FILENAME', '-' },
+					stdin = true,
+				},
+			},
+		},
+	},
+	{
+		'mfussenegger/nvim-lint',
+		event = { 'BufReadPre', 'BufNewFile' },
+		config = function()
+			local lint = require 'lint'
+			lint.linters_by_ft = {
+				python = { 'ruff' },
+				make = { 'checkmake' },
+			}
+			vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {
+				callback = function()
+					if vim.bo.modifiable then
+						lint.try_lint()
+					end
+				end,
+			})
+		end,
+	},
 }

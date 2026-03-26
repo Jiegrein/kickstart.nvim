@@ -27,6 +27,59 @@ return {
   keys = {
     -- Basic debugging keymaps, feel free to change to your liking!
     {
+      '<F6>',
+      function()
+        -- Find all .sln files walking up from current file
+        local dir = vim.fn.expand '%:p:h'
+        local solutions = {}
+        while dir and dir ~= '' do
+          local slns = vim.fn.glob(dir .. '/*.sln', false, true)
+          for _, s in ipairs(slns) do
+            table.insert(solutions, s)
+          end
+          local parent = vim.fn.fnamemodify(dir, ':h')
+          if parent == dir then
+            break
+          end
+          dir = parent
+        end
+        if #solutions == 0 then
+          vim.notify('No .sln found', vim.log.levels.ERROR)
+          return
+        end
+        local function build(sln_path)
+          local sln_dir = vim.fn.fnamemodify(sln_path, ':h')
+          local sln_name = vim.fn.fnamemodify(sln_path, ':t')
+          vim.notify('Building ' .. sln_name .. '...', vim.log.levels.INFO)
+          vim.fn.jobstart('dotnet build --nologo "' .. sln_path .. '"', {
+            stdout_buffered = true,
+            stderr_buffered = true,
+            on_exit = function(_, code)
+              vim.schedule(function()
+                if code == 0 then
+                  -- Set cwd so F5 launch.json resolves ${workspaceFolder} correctly
+                  vim.cmd('cd ' .. vim.fn.fnameescape(sln_dir))
+                  vim.notify('Build succeeded (' .. sln_name .. ')\ncwd set to ' .. sln_dir, vim.log.levels.INFO)
+                else
+                  vim.notify('Build failed (' .. sln_name .. ')', vim.log.levels.ERROR)
+                end
+              end)
+            end,
+          })
+        end
+        if #solutions == 1 then
+          build(solutions[1])
+        else
+          vim.ui.select(solutions, { prompt = 'Select solution to build:' }, function(choice)
+            if choice then
+              build(choice)
+            end
+          end)
+        end
+      end,
+      desc = 'Build .NET solution',
+    },
+    {
       '<F5>',
       function()
         require('dap').continue()
@@ -95,6 +148,7 @@ return {
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
         'delve',
+        'coreclr',
       },
     }
 
@@ -144,5 +198,36 @@ return {
         detached = vim.fn.has 'win32' == 0,
       },
     }
+
+    -- C# / .NET config
+    dap.adapters.coreclr = {
+      type = 'executable',
+      command = vim.fn.stdpath 'data' .. '/mason/packages/netcoredbg/netcoredbg/netcoredbg.exe',
+      args = { '--interpreter=vscode' },
+    }
+
+    -- Load launch.json from .vscode/ first (these appear at the top)
+    require('dap.ext.vscode').load_launchjs(nil, { coreclr = { 'cs' } })
+
+    -- Append fallback configs at the end
+    local cs_configs = dap.configurations.cs or {}
+    table.insert(cs_configs, {
+      type = 'coreclr',
+      name = 'Launch DLL',
+      request = 'launch',
+      program = function()
+        return vim.fn.input('Path to dll: ', vim.fn.getcwd() .. '/bin/Debug/', 'file')
+      end,
+      cwd = function()
+        return vim.fn.getcwd()
+      end,
+    })
+    table.insert(cs_configs, {
+      type = 'coreclr',
+      name = 'Attach to process',
+      request = 'attach',
+      processId = require('dap.utils').pick_process,
+    })
+    dap.configurations.cs = cs_configs
   end,
 }
